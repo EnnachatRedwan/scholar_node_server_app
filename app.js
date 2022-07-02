@@ -47,9 +47,10 @@ app.post("/register", (req, res) => {
 
 app.get("/search", (req, res) => {
   const fullname = req.headers.fullname;
+  const user=req.headers.user;
   session
     .run(
-      `match(u:user) where toLower(u.fullname) contains tolower('${fullname}') RETURN u;`
+      `match(u:user) where toLower(u.fullname) contains tolower('${fullname}') and u.fullname<>'${user}' RETURN u;`
     )
     .then((result) => {
       recs = [];
