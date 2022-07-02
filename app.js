@@ -113,9 +113,12 @@ app.post("/add-post", (req, res) => {
       posted=false;
       keys.forEach(key=>{
         if(content.toLowerCase().split(key.toLowerCase()).length - 1>2){
-          session.run(`match (d:Domaine{title:'${key}'})
+          session2=driver.session();
+          session2.run(`match (d:Domaine{title:'${key}'})
           match (u:user{guid:'${user}'})
-          merge (u)-[:posted]->(:post{content:'${content}'})-[:talks_about]->(d);`)
+          merge (p:post{user:'${user}',content:'${content}'})
+          merge (u)-[:posted]->(p)
+          merge (p)-[:talks_about]->(d);`)
           .then(posted=true)
           .catch(err=>console.log(err));
         }
