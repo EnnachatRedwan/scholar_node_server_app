@@ -98,8 +98,8 @@ app.get("/followers", (req, res) => {
 });
 
 app.post("/add-post", (req, res) => {
-  const content = req.headers.content;
-  const user=req.headers.user;
+  const content = req.body.content;
+  const user=req.body.user;
   const keys = [];
 
   session
@@ -112,8 +112,6 @@ app.post("/add-post", (req, res) => {
     .then(()=>{
       posted=false;
       keys.forEach(key=>{
-        const c=content.toLowerCase();
-        const k=key.toLowerCase();
         if(content.toLowerCase().split(key.toLowerCase()).length - 1>2){
           session.run(`match (d:Domaine{title:'${key}'})
           match (u:user{guid:'${user}'})
