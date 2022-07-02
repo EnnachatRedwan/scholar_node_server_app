@@ -52,12 +52,28 @@ app.get("/search", (req, res) => {
       `match(u:user) where toLower(u.fullname) contains tolower('${fullname}') RETURN u;`
     )
     .then((result) => {
-      recs=[];
-      result.records.forEach(record=>recs.push({
-        "fullname":record._fields[0].properties["fullname"],
-        "speciality":record._fields[0].properties["speciality"],
-        "guid":record._fields[0].properties["guid"],
-      }))
+      recs = [];
+      result.records.forEach((record) =>
+        recs.push({
+          fullname: record._fields[0].properties["fullname"],
+          speciality: record._fields[0].properties["speciality"],
+          guid: record._fields[0].properties["guid"],
+        })
+      );
+      res.send(recs);
+    })
+    .catch((err) => console.log(err));
+});
+
+app.post("/follow", (req, res) => {
+  const user1 = req.body.user1;
+  const user2 = req.body.user2;
+  session
+    .run(
+      `match(u1:user{guid:'${user1}'}),(u2:user{guid:'${user2}'})
+      merge (u1)-[:follows]->(u2);`
+    )
+    .then((result) => {
       res.send(recs);
     })
     .catch((err) => console.log(err));
