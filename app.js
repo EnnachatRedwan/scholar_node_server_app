@@ -15,7 +15,6 @@ const driver = neo4j.driver(
 const session = driver.session();
 
 app.get("/login", (req, res) => {
-  console.log(req.headers);
   const email = req.headers.email;
   const password = req.headers.password;
   session
@@ -78,6 +77,24 @@ app.post("/follow", (req, res) => {
       res.send(recs);
     })
     .catch((err) => console.log(err));
+});
+
+app.get('/followers',(req,res)=>{
+  const user=req.headers.guid;
+  session.run(`match (u:user)-[:follows]->(:user{guid:'${user}'}) return u;`)
+  .then(result=>{
+    recs = [];
+      result.records.forEach((record) =>
+        recs.push({
+          fullname: record._fields[0].properties["fullname"],
+          speciality: record._fields[0].properties["speciality"],
+          guid: record._fields[0].properties["guid"],
+        })
+      );
+      console.log(recs);
+      res.send(recs);
+  })
+  .catch((err) => console.log(err));
 });
 
 app.listen(3000, () => console.log("Server running on port 3000"));
