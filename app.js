@@ -46,7 +46,7 @@ app.post("/register", (req, res) => {
 
 app.get("/search", (req, res) => {
   const fullname = req.headers.fullname;
-  const user=req.headers.user;
+  const user = req.headers.user;
   session
     .run(
       `match(u:user) where toLower(u.fullname) contains tolower('${fullname}') and u.fullname<>'${user}' RETURN u;`
@@ -79,11 +79,12 @@ app.post("/follow", (req, res) => {
     .catch((err) => console.log(err));
 });
 
-app.get('/followers',(req,res)=>{
-  const user=req.headers.guid;
-  session.run(`match (u:user)-[:follows]->(:user{guid:'${user}'}) return u;`)
-  .then(result=>{
-    recs = [];
+app.get("/followers", (req, res) => {
+  const user = req.headers.guid;
+  session
+    .run(`match (u:user)-[:follows]->(:user{guid:'${user}'}) return u;`)
+    .then((result) => {
+      recs = [];
       result.records.forEach((record) =>
         recs.push({
           fullname: record._fields[0].properties["fullname"],
@@ -92,8 +93,43 @@ app.get('/followers',(req,res)=>{
         })
       );
       res.send(recs);
-  })
-  .catch((err) => console.log(err));
+    })
+    .catch((err) => console.log(err));
+});
+
+app.post("/add-post", (req, res) => {
+  const content = req.headers.content;
+  const user=req.headers.user;
+  const keys = [];
+
+  session
+    .run(`match(d:Domaine) RETURN d.title;`)
+    .then((result) => {
+      result.records.forEach(record=>{
+        keys.push(record._fields[0]);
+      });
+    })
+    .then(()=>{
+      posted=false;
+      keys.forEach(key=>{
+        const c=content.toLowerCase();
+        const k=key.toLowerCase();
+        if(content.toLowerCase().split(key.toLowerCase()).length - 1>2){
+          session.run(`match (d:Domaine{title:'${key}'})
+          match (u:user{guid:'${user}'})
+          merge (u)-[:posted]->(:post{content:'${content}'})-[:talks_about]->(d);`)
+          .then(posted=true)
+          .catch(err=>console.log(err));
+        }
+      })
+      if(!posted){
+        session.run(`match (u:user{guid:'${user}'})
+          merge (u)-[:posted]->(:post{content:'${content}'});`)
+          .catch(err=>console.log(err));
+      }
+      res.send();
+    })
+    .catch((err) => console.log(err));
 });
 
 app.listen(3000, () => console.log("Server running on port 3000"));
