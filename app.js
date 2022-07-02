@@ -91,7 +91,6 @@ app.get('/followers',(req,res)=>{
           guid: record._fields[0].properties["guid"],
         })
       );
-      console.log(recs);
       res.send(recs);
   })
   .catch((err) => console.log(err));
