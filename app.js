@@ -2,10 +2,12 @@ const express = require("express");
 const neo4j = require("neo4j-driver");
 const bodyParser = require("body-parser");
 const { v4: uuidv4 } = require("uuid");
+const { json } = require("body-parser");
 
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({}));
 
 const driver = neo4j.driver(
   "bolt://localhost",
@@ -100,7 +102,12 @@ app.get("/followers", (req, res) => {
 app.post("/add-post", (req, res) => {
   const content = req.body.content;
   const user=req.body.user;
+  var tags=req.body.tags;
+  tags=JSON.parse(tags);
   const keys = [];
+
+  console.log(tags);
+  console.log(typeof(tags));
 
   session
     .run(`match(d:Domaine) RETURN d.title;`)
@@ -128,6 +135,12 @@ app.post("/add-post", (req, res) => {
           merge (u)-[:posted]->(:post{content:'${content}'});`)
           .catch(err=>console.log(err));
       }
+      tags.forEach(tag=>{
+        session3=driver.session();
+        session3.run(`match (t:user{guid:'${tag}'})
+        match (p:post{user:'${user}',content:"$content"})
+        merge (t)-[:taged_in]->(p)`,{content})
+      })
       res.send();
     })
     .catch((err) => console.log(err));
