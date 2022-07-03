@@ -161,22 +161,24 @@ app.get("/posts", (req, res) => {
   session
     .run(
       `match(u:user{guid:$user})
-      match(u)-[:follows]->(f:user)-[:posted]->(p:post)<-[:taged_in]-(t)
-      return f,p,count(t) as tags;`,
+      match(u)-[:follows]->(f:user)-[:posted]->(p:post)
+      return f,p;`,
       { user }
     )
     .then((result) => {
       recs = [];
       result.records.forEach((record) =>
         recs.push({
-          user: record._fields[0].properties,
-          post: record._fields[1].properties,
-          tags: record._fieldLookup["tags"],
+          fullname: record._fields[0].properties["fullname"],
+          speciality: record._fields[0].properties["speciality"],
+          content:record._fields[1].properties["content"],
         })
       );
       res.send(recs);
     })
     .catch((err) => console.log(err));
 });
+
+
 
 app.listen(3000, () => console.log("Server running on port 3000"));
