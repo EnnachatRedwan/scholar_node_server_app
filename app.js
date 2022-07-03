@@ -2,7 +2,6 @@ const express = require("express");
 const neo4j = require("neo4j-driver");
 const bodyParser = require("body-parser");
 const { v4: uuidv4 } = require("uuid");
-const { json } = require("body-parser");
 
 const app = express();
 
@@ -106,9 +105,6 @@ app.post("/add-post", (req, res) => {
   tags=JSON.parse(tags);
   const keys = [];
 
-  console.log(tags);
-  console.log(typeof(tags));
-
   session
     .run(`match(d:Domaine) RETURN d.title;`)
     .then((result) => {
@@ -121,25 +117,28 @@ app.post("/add-post", (req, res) => {
       keys.forEach(key=>{
         if(content.toLowerCase().split(key.toLowerCase()).length - 1>2){
           session2=driver.session();
-          session2.run(`match (d:Domaine{title:'${key}'})
-          match (u:user{guid:'${user}'})
-          merge (p:post{user:'${user}',content:"$content"})
+          session2.run(`match (d:Domaine{title:$key})
+          match (u:user{guid:$user})
+          merge (p:post{user:$user,content:"$content"})
           merge (u)-[:posted]->(p)
-          merge (p)-[:talks_about]->(d);`,{content})
+          merge (p)-[:talks_about]->(d);`,{user,key,content})
           .then(posted=true)
           .catch(err=>console.log(err));
         }
       })
       if(!posted){
-        session.run(`match (u:user{guid:'${user}'})
-          merge (u)-[:posted]->(:post{content:'${content}'});`)
+        session.run(`match (u:user{guid:$user})
+          merge (u)-[:posted]->(:post{content:$content,user:$user});`,{content,user})
           .catch(err=>console.log(err));
       }
       tags.forEach(tag=>{
+
+
         session3=driver.session();
-        session3.run(`match (t:user{guid:'${tag}'})
-        match (p:post{user:'${user}',content:"$content"})
-        merge (t)-[:taged_in]->(p)`,{content})
+        session3.run(`match (t:user{guid:$tag})
+        match (p:post{user:$user,content:$content})
+        merge (t)-[:taged_in]->(p)`,{content,tag,user})
+        .then(result=>console.log(result))
       })
       res.send();
     })
