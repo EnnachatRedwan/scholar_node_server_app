@@ -5,13 +5,25 @@ const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 
+//neo4j aura
+const uri = 'neo4j+s://df9753de.databases.neo4j.io:7687';
+const user = 'neo4j';
+const password = 'X7OoXiD0tF1icec28hdE9Vxu0sNTsYsmxbNpZudjVm8';
+
+const driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
+//
+
+
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({}));
 
-const driver = neo4j.driver(
-  "bolt://localhost",
-  neo4j.auth.basic("neo4j", "abd123")
-);
+// local neo4j
+
+// const driver = neo4j.driver(
+//   "bolt://localhost",
+//   neo4j.auth.basic("neo4j", "abd123")
+// );
 
 const session = driver.session();
 
@@ -200,4 +212,6 @@ app.get('/recommendation',(req,res)=>{
   .catch(err=>console.log(err));
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+let port=process.env.PORT || 3000
+
+app.listen(port, () => console.log("Server running on port 3000"));
