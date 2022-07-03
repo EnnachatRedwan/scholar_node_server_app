@@ -119,7 +119,7 @@ app.post("/add-post", (req, res) => {
           session2=driver.session();
           session2.run(`match (d:Domaine{title:$key})
           match (u:user{guid:$user})
-          merge (p:post{user:$user,content:"$content"})
+          merge (p:post{user:$user,content:$content})
           merge (u)-[:posted]->(p)
           merge (p)-[:talks_about]->(d);`,{user,key,content})
           .then(posted=true)
