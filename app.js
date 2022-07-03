@@ -185,7 +185,7 @@ app.get('/recommendation',(req,res)=>{
   session.run(`match(d1:Domaine)<-[:talks_about]-(:post{user:'${user}'})<-[:posted]-(:user{guid:'${user}'})-[:follows]->(f)-[:posted]-(p)-[:talks_about]-(d2:Domaine)
   where d1=d2
   match(p)<-[:taged_in]-(t)
-  return t;`)
+  return distinct t;`)
   .then(result=>{
     recs = [];
       result.records.forEach((record) =>
