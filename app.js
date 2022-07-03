@@ -153,7 +153,7 @@ app.post("/add-post", (req, res) => {
       });
       res.send();
     })
-    .catch((err) => console.log(err));
+    .catch((err) => console.log('error :------------------\n'+err));
 });
 
 app.get("/posts", (req, res) => {
