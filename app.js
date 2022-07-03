@@ -180,4 +180,24 @@ app.get("/posts", (req, res) => {
     .catch((err) => console.log(err));
 });
 
+app.get('/recommendation',(req,res)=>{
+  const user=req.headers.user;
+  session.run(`match(d1:Domaine)<-[:talks_about]-(:post{user:'${user}'})<-[:posted]-(:user{guid:'${user}'})-[:follows]->(f)-[:posted]-(p)-[:talks_about]-(d2:Domaine)
+  where d1=d2
+  match(p)<-[:taged_in]-(t)
+  return t;`)
+  .then(result=>{
+    recs = [];
+      result.records.forEach((record) =>
+        recs.push({
+          fullname: record._fields[0].properties["fullname"],
+          speciality: record._fields[0].properties["speciality"],
+          guid: record._fields[0].properties["guid"],
+        })
+      );
+      res.send(recs);
+  })
+  .catch(err=>console.log(err));
+});
+
 app.listen(3000, () => console.log("Server running on port 3000"));
