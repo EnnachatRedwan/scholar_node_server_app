@@ -128,11 +128,11 @@ app.post("/add-post", (req, res) => {
             )
             .then((posted = true))
             .catch((err) => console.log(err));
-          return isPosted;
+          return posted;
         }
       });
     })
-    .then((isPosted) => {
+    .then((posted) => {
       if (!posted) {
         session
           .run(
