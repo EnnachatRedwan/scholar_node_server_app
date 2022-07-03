@@ -100,47 +100,81 @@ app.get("/followers", (req, res) => {
 
 app.post("/add-post", (req, res) => {
   const content = req.body.content;
-  const user=req.body.user;
-  var tags=req.body.tags;
-  tags=JSON.parse(tags);
+  const user = req.body.user;
+  var tags = req.body.tags;
+  tags = JSON.parse(tags);
   const keys = [];
+
+  console.log(tags);
 
   session
     .run(`match(d:Domaine) RETURN d.title;`)
     .then((result) => {
-      result.records.forEach(record=>{
+      result.records.forEach((record) => {
         keys.push(record._fields[0]);
       });
     })
-    .then(()=>{
-      posted=false;
-      keys.forEach(key=>{
-        if(content.toLowerCase().split(key.toLowerCase()).length - 1>2){
-          session2=driver.session();
-          session2.run(`match (d:Domaine{title:$key})
+    .then(() => {
+      posted = false;
+      keys.forEach((key) => {
+        if (content.toLowerCase().split(key.toLowerCase()).length - 1 > 2) {
+          session2 = driver.session();
+          session2
+            .run(
+              `match (d:Domaine{title:$key})
           match (u:user{guid:$user})
           merge (p:post{user:$user,content:$content})
           merge (u)-[:posted]->(p)
-          merge (p)-[:talks_about]->(d);`,{user,key,content})
-          .then(posted=true)
-          .catch(err=>console.log(err));
+          merge (p)-[:talks_about]->(d);`,
+              { user, key, content }
+            )
+            .then((posted = true))
+            .catch((err) => console.log(err));
         }
-      })
-      if(!posted){
-        session.run(`match (u:user{guid:$user})
-          merge (u)-[:posted]->(:post{content:$content,user:$user});`,{content,user})
-          .catch(err=>console.log(err));
+      });
+      if (!posted) {
+        session
+          .run(
+            `match (u:user{guid:$user})
+          merge (u)-[:posted]->(:post{content:$content,user:$user});`,
+            { content, user }
+          )
+          .catch((err) => console.log(err));
       }
-      tags.forEach(tag=>{
-
-
-        session3=driver.session();
-        session3.run(`match (t:user{guid:$tag})
-        match (p:post{user:$user,content:$content})
-        merge (t)-[:taged_in]->(p)`,{content,tag,user})
-        .then(result=>console.log(result))
-      })
+      tags.forEach((tag) => {
+        session3 = driver.session();
+        session3
+          .run(
+            `match (t:user{guid:'${tag}'})
+        match (p:post{user:'${user}',content:'${content}'})
+        merge (t)-[:taged_in]->(p)`
+          )
+          .then((result) => console.log(result));
+      });
       res.send();
+    })
+    .catch((err) => console.log(err));
+});
+
+app.get("/posts", (req, res) => {
+  const user = req.headers.user;
+  session
+    .run(
+      `match(u:user{guid:$user})
+      match(u)-[:follows]->(f:user)-[:posted]->(p:post)<-[:taged_in]-(t)
+      return f,p,count(t) as tags;`,
+      { user }
+    )
+    .then((result) => {
+      recs = [];
+      result.records.forEach((record) =>
+        recs.push({
+          user: record._fields[0].properties,
+          post: record._fields[1].properties,
+          tags: record._fieldLookup["tags"],
+        })
+      );
+      res.send(recs);
     })
     .catch((err) => console.log(err));
 });
