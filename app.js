@@ -105,8 +105,6 @@ app.post("/add-post", (req, res) => {
   tags = JSON.parse(tags);
   const keys = [];
 
-  console.log(tags);
-
   session
     .run(`match(d:Domaine) RETURN d.title;`)
     .then((result) => {
@@ -130,30 +128,33 @@ app.post("/add-post", (req, res) => {
             )
             .then((posted = true))
             .catch((err) => console.log(err));
+          return isPosted;
         }
       });
+    })
+    .then((isPosted) => {
       if (!posted) {
         session
           .run(
             `match (u:user{guid:$user})
-          merge (u)-[:posted]->(:post{content:$content,user:$user});`,
+            merge (u)-[:posted]->(:post{content:$content,user:$user});`,
             { content, user }
           )
           .catch((err) => console.log(err));
       }
+    })
+    .then(() => {
       tags.forEach((tag) => {
         session3 = driver.session();
-        session3
-          .run(
-            `match (t:user{guid:'${tag}'})
-        match (p:post{user:'${user}',content:'${content}'})
-        merge (t)-[:taged_in]->(p)`
-          )
-          .then((result) => console.log(result));
+        session3.run(
+          `match (t:user{guid:'${tag}'})
+          match (p:post{user:'${user}',content:'${content}'})
+          merge (t)-[:taged_in]->(p)`
+        );
       });
       res.send();
     })
-    .catch((err) => console.log('error :------------------\n'+err));
+    .catch((err) => console.log(err));
 });
 
 app.get("/posts", (req, res) => {
@@ -171,14 +172,12 @@ app.get("/posts", (req, res) => {
         recs.push({
           fullname: record._fields[0].properties["fullname"],
           speciality: record._fields[0].properties["speciality"],
-          content:record._fields[1].properties["content"],
+          content: record._fields[1].properties["content"],
         })
       );
       res.send(recs);
     })
     .catch((err) => console.log(err));
 });
-
-
 
 app.listen(3000, () => console.log("Server running on port 3000"));
